@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: safestore
+      POSTGRES_PASSWORD: Strong_db_Passw0rd!
+      POSTGRES_DB: safestoredb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=safestoredb;Username=safestore;Password=Strong_db_Passw0rd!
+    ports:
+      - "5000:80"
+
+volumes:
+  pgdata:
