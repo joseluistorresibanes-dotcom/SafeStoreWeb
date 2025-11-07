@@ -108,6 +108,36 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/debug-reset", async (HttpContext context) =>
+    {
+        var signInManager = context.RequestServices.GetRequiredService<SignInManager<ApplicationUser>>();
+        await signInManager.SignOutAsync();
+
+        // Eliminar todas las cookies de Identity
+        context.Response.Cookies.Delete("SafeStore.Auth");
+        context.Response.Cookies.Delete(".AspNetCore.Identity.Application");
+        context.Response.Cookies.Delete(".AspNetCore.Antiforgery.*");
+
+        return Results.Redirect("/Account/Login");
+    });
+
+    app.MapGet("/debug-status", async (HttpContext context) =>
+    {
+        var userManager = context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.GetUserAsync(context.User);
+
+        return Results.Json(new
+        {
+            IsAuthenticated = context.User.Identity.IsAuthenticated,
+            UserName = context.User.Identity.Name,
+            UserExistsInDb = user != null,
+            UserId = user?.Id
+        });
+    });
+}
+
 // ==================== CONFIGURACIÓN DEL PIPELINE ====================
 
 // ---------------------- Middleware de Seguridad ----------------------
