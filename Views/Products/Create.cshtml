@@ -1,0 +1,24 @@
+@model SafeStoreWeb.Models.Product
+@{
+    ViewData["Title"] = "Crear Producto";
+}
+<h1>Crear Producto</h1>
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div>
+        <label>Nombre</label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div>
+        <label>Descripción</label>
+        <textarea asp-for="Description"></textarea>
+        <span asp-validation-for="Description"></span>
+    </div>
+    <div>
+        <label>Precio</label>
+        <input asp-for="Price" />
+        <span asp-validation-for="Price"></span>
+    </div>
+    <button type="submit">Crear</button>
+</form>

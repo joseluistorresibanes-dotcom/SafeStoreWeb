@@ -1,0 +1,26 @@
+@model IEnumerable<SafeStoreWeb.Models.Product>
+@{
+    ViewData["Title"] = "Catálogo";
+}
+<h1>Catálogo de productos</h1>
+<p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-action="Create">Crear producto</a>
+    }
+</p>
+<table>
+    <thead>
+        <tr><th>Nombre</th><th>Descripción</th><th>Precio</th></tr>
+    </thead>
+    <tbody>
+    @foreach(var p in Model)
+    {
+        <tr>
+            <td>@Html.DisplayFor(m => p.Name)</td>
+            <td>@Html.DisplayFor(m => p.Description)</td>
+            <td>@Html.DisplayFor(m => p.Price)</td>
+        </tr>
+    }
+    </tbody>
+</table>

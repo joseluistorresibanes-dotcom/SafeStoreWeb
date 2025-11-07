@@ -1,0 +1,124 @@
+@model SafeStoreWeb.Controllers.RegisterModel
+@{
+    ViewData["Title"] = "Crear Cuenta";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h2 class="mb-0 fw-bold">
+                        <i class="bi bi-person-plus me-2"></i>Registro
+                    </h2>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <!-- Mensajes del servidor -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Por favor corrige los siguientes errores:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <form id="registerForm" asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="Email" class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" name="Email" id="Email" placeholder="usuario@ejemplo.com" required>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Password" class="form-label fw-semibold">Contraseña</label>
+                            <input type="password" class="form-control" name="Password" id="Password" placeholder="Mínimo 10 caracteres" required>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="ConfirmPassword" class="form-label fw-semibold">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" name="ConfirmPassword" id="ConfirmPassword" placeholder="Repite tu contraseña" required>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Botón de Registro -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg fw-semibold py-2" id="submitBtn">
+                                <span class="submit-text">
+                                    <i class="bi bi-person-check me-2"></i>Crear Cuenta
+                                </span>
+                                <span class="loading-spinner" style="display: none;">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    Procesando...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer text-center py-3 bg-light">
+                    <p class="mb-0 text-muted small">
+                        ¿Ya tienes cuenta?
+                        <a href="@Url.Action("Login", "Account")" class="text-success text-decoration-none">
+                            Inicia sesión
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = submitBtn.querySelector('.submit-text');
+            const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+
+            // Prevenir envío automático y mostrar loading solo al hacer clic
+            form.addEventListener('submit', function(event) {
+                // Solo mostrar loading si el formulario es válido
+                if (form.checkValidity()) {
+                    submitText.style.display = 'none';
+                    loadingSpinner.style.display = 'inline';
+                    submitBtn.disabled = true;
+                }
+                // Si no es válido, dejar que HTML5 muestre las validaciones
+            });
+
+            // Opcional: Validación adicional de contraseña
+            const passwordInput = document.querySelector('input[name="Password"]');
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
+                    // Remover clases de validación previas
+                    this.classList.remove('is-valid', 'is-invalid');
+
+                    if (this.value.length >= 10) {
+                        this.classList.add('is-valid');
+                    } else if (this.value.length > 0) {
+                        this.classList.add('is-invalid');
+                    }
+                });
+            }
+        });
+    </script>
+}

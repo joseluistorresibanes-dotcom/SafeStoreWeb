@@ -1,0 +1,112 @@
+@model SafeStoreWeb.Controllers.LoginModel
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h2 class="mb-0 fw-bold">
+                        <i class="bi bi-shield-lock me-2"></i>Iniciar Sesión
+                    </h2>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <!-- Mensajes del servidor -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Error de autenticación:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <form id="loginForm" asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Campo Email CORREGIDO -->
+                        <div class="mb-3">
+                            <label for="Email" class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" name="Email" id="Email" placeholder="usuario@ejemplo.com" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Password" class="form-label fw-semibold">Contraseña</label>
+                            <input type="password" class="form-control" name="Password" id="Password" placeholder="Ingresa tu contraseña" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="RememberMe" id="RememberMe" value="true">
+                                <label class="form-check-label" for="RememberMe">
+                                    Recordar mi sesión
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Campo ReturnUrl oculto -->
+                        <input type="hidden" asp-for="ReturnUrl" />
+
+                        <!-- Botón de Envío -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg fw-semibold py-2" id="submitBtn">
+                                <span class="submit-text">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                                </span>
+                                <span class="loading-spinner" style="display: none;">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    Verificando...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer text-center py-3 bg-light">
+                    <p class="mb-0 text-muted small">
+                        ¿No tienes cuenta?
+                        <a href="@Url.Action("Register", "Account")" class="text-primary text-decoration-none">
+                            Regístrate aquí
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = submitBtn.querySelector('.submit-text');
+            const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+
+            // Loading al enviar el formulario
+            form.addEventListener('submit', function() {
+                if (form.checkValidity()) {
+                    submitText.style.display = 'none';
+                    loadingSpinner.style.display = 'inline';
+                    submitBtn.disabled = true;
+                }
+            });
+        });
+    </script>
+}
