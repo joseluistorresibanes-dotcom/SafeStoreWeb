@@ -1,24 +1,177 @@
 @model SafeStoreWeb.Models.Product
 @{
     ViewData["Title"] = "Crear Producto";
+    Layout = "_Layout";
 }
-<h1>Crear Producto</h1>
-<form asp-action="Create" method="post">
-    @Html.AntiForgeryToken()
-    <div>
-        <label>Nombre</label>
-        <input asp-for="Name" />
-        <span asp-validation-for="Name"></span>
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 fw-bold text-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Crear Nuevo Producto
+                    </h1>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+
+            <!-- Tarjeta del formulario -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>Formulario de Producto
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Errores en el formulario:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Campo Nombre -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nombre del Producto</label>
+                            <input type="text" class="form-control" name="Name" required
+                                   placeholder="Ingresa el nombre del producto">
+                        </div>
+
+                        <!-- Campo Descripción -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Descripción</label>
+                            <textarea class="form-control" name="Description" rows="3"
+                                      placeholder="Describe el producto"></textarea>
+                        </div>
+
+                        <!-- Campo Precio -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Precio</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0.01" class="form-control" name="Price" required
+                                       placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-2"></i>Crear Producto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-        <label>Descripción</label>
-        <textarea asp-for="Description"></textarea>
-        <span asp-validation-for="Description"></span>
-    </div>
-    <div>
-        <label>Precio</label>
-        <input asp-for="Price" />
-        <span asp-validation-for="Price"></span>
-    </div>
-    <button type="submit">Crear</button>
-</form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('createForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = submitBtn.querySelector('.submit-text');
+            const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+
+            // Loading al enviar el formulario
+            form.addEventListener('submit', function() {
+                if (form.checkValidity()) {
+                    submitText.style.display = 'none';
+                    loadingSpinner.style.display = 'inline';
+                    submitBtn.disabled = true;
+                }
+            });
+
+            // Validación en tiempo real del precio
+            const priceInput = document.querySelector('input[name="Price"]');
+            if (priceInput) {
+                priceInput.addEventListener('blur', function() {
+                    const value = parseFloat(this.value);
+                    if (value < 0.01) {
+                        this.setCustomValidity('El precio debe ser mayor a 0');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+            }
+
+            // Validación en tiempo real del nombre
+            const nameInput = document.querySelector('input[name="Name"]');
+            if (nameInput) {
+                nameInput.addEventListener('input', function() {
+                    if (this.value.length > 0) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.remove('is-valid');
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+<!-- Estilos adicionales -->
+<style>
+    .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
+    }
+
+    .form-control-lg {
+        padding: 0.75rem 1rem;
+        font-size: 1.1rem;
+    }
+
+    .btn-success {
+        background: linear-gradient(45deg, #198754, #20c997);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(25, 135, 84, 0.4);
+        }
+
+        .btn-success:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+    .card {
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .is-valid {
+        border-color: #198754 !important;
+    }
+
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+</style>

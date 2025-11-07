@@ -1,26 +1,288 @@
 @model IEnumerable<SafeStoreWeb.Models.Product>
 @{
-    ViewData["Title"] = "Catálogo";
+    ViewData["Title"] = "Catálogo de Productos";
+    Layout = "_Layout";
 }
-<h1>Catálogo de productos</h1>
-<p>
-    @if (User.Identity?.IsAuthenticated == true)
+
+<div class="container-fluid py-4">
+    <!-- Header de la página -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-primary">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>Catálogo de Productos
+                    </h1>
+                    <p class="text-muted mb-0">Gestiona y explora todos los productos disponibles</p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="/Products/Create" class="btn btn-success btn-lg">
+                        <i class="bi bi-plus-circle me-2"></i>Crear Producto
+                    </a>
+                    <button type="button" class="btn btn-outline-primary btn-lg" data-bs-toggle="modal" data-bs-target="#helpModal">
+                        <i class="bi bi-question-circle me-2"></i>Ayuda
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensajes temporales -->
+    @if (TempData["SuccessMessage"] != null)
     {
-        <a asp-action="Create">Crear producto</a>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     }
-</p>
-<table>
-    <thead>
-        <tr><th>Nombre</th><th>Descripción</th><th>Precio</th></tr>
-    </thead>
-    <tbody>
-    @foreach(var p in Model)
+
+    <!-- Tarjeta de productos -->
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>Lista de Productos
+                    </h5>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="opacity-75">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Total: @Model.Count() productos
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">
+                                    <i class="bi bi-card-text me-2"></i>Nombre
+                                </th>
+                                <th>
+                                    <i class="bi bi-chat-text me-2"></i>Descripción
+                                </th>
+                                <th class="text-end">
+                                    <i class="bi bi-currency-dollar me-2"></i>Precio
+                                </th>
+                                <th class="text-center pe-4">
+                                    <i class="bi bi-gear me-2"></i>Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model)
+                            {
+                                <tr class="align-middle">
+                                    <td class="ps-4 fw-semibold text-dark">
+                                        @Html.DisplayFor(m => product.Name)
+                                    </td>
+                                    <td class="text-muted">
+                                        @if (!string.IsNullOrEmpty(product.Description))
+                                        {
+                                            @if (product.Description.Length > 50)
+                                            {
+                                                <span title="@product.Description">
+                                                    @product.Description.Substring(0, 50)...
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                @product.Description
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sin descripción</span>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold text-success">
+                                        $@Html.DisplayFor(m => product.Price)
+                                    </td>
+                                    <td class="text-center pe-4">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="Details" asp-route-id="@product.Id"
+                                               class="btn btn-outline-primary" title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <!-- Espacio para futuras acciones -->
+                                            <button class="btn btn-outline-secondary" disabled title="Editar (próximamente)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" disabled title="Eliminar (próximamente)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <!-- Estado vacío -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No hay productos disponibles</h4>
+                    <p class="text-muted mb-4">Comienza agregando el primer producto al catálogo</p>
+                    <a href="/Products/Create" class="btn btn-success btn-lg">
+                        <i class="bi bi-plus-circle me-2"></i>Crear Primer Producto
+                    </a>
+                </div>
+            }
+        </div>
+
+        <!-- Footer de la tabla -->
+        @if (Model.Any())
+        {
+            <div class="card-footer bg-light py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Área segura - Solo usuarios autenticados
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <small class="text-muted">
+                            <i class="bi bi-database me-1"></i>
+                            Mostrando <strong>@Model.Count()</strong> productos
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    @if (Model.Any())
     {
-        <tr>
-            <td>@Html.DisplayFor(m => p.Name)</td>
-            <td>@Html.DisplayFor(m => p.Description)</td>
-            <td>@Html.DisplayFor(m => p.Price)</td>
-        </tr>
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card border-0 bg-success bg-opacity-10 stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-box-seam display-6 text-success mb-2"></i>
+                        <h4 class="text-success">@Model.Count()</h4>
+                        <p class="text-muted mb-0">Total Productos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-primary bg-opacity-10 stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-currency-dollar display-6 text-primary mb-2"></i>
+                        <h4 class="text-primary">$@Model.Average(p => p.Price).ToString("F2")</h4>
+                        <p class="text-muted mb-0">Precio Promedio</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-warning bg-opacity-10 stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-arrow-up display-6 text-warning mb-2"></i>
+                        <h4 class="text-warning">$@Model.Max(p => p.Price).ToString("F2")</h4>
+                        <p class="text-muted mb-0">Precio Más Alto</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-info bg-opacity-10 stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-arrow-down display-6 text-info mb-2"></i>
+                        <h4 class="text-info">$@Model.Min(p => p.Price).ToString("F2")</h4>
+                        <p class="text-muted mb-0">Precio Más Bajo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     }
-    </tbody>
-</table>
+</div>
+
+<!-- Modal de Ayuda -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="helpModalLabel">
+                    <i class="bi bi-question-circle me-2"></i>Ayuda - Gestión de Productos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-eye text-primary me-2"></i>Ver Detalles</h6>
+                        <p class="text-muted small">Haz clic en el botón <i class="bi bi-eye"></i> para ver información detallada de cada producto.</p>
+
+                        <h6><i class="bi bi-plus-circle text-success me-2"></i>Crear Producto</h6>
+                        <p class="text-muted small">Usa el botón "Crear Producto" para agregar nuevos productos al catálogo.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-shield-check text-warning me-2"></i>Seguridad</h6>
+                        <p class="text-muted small">Esta área está protegida y solo es accesible para usuarios autenticados.</p>
+
+                        <h6><i class="bi bi-pencil text-info me-2"></i>Próximamente</h6>
+                        <p class="text-muted small">Funciones de edición y eliminación estarán disponibles próximamente.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos adicionales -->
+<style>
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+    }
+
+    .card {
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.04);
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+    }
+
+    .btn-group .btn {
+        border-radius: 6px;
+        margin: 0 2px;
+    }
+
+    .stats-card {
+        transition: transform 0.2s ease;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+        }
+</style>

@@ -6,6 +6,7 @@ using SafeStoreWeb.Models;
 
 namespace SafeStoreWeb.Controllers
 {
+    [Authorize] // ← AGREGAR ESTE ATRIBUTO A NIVEL DE CLASE
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _db;
@@ -17,7 +18,7 @@ namespace SafeStoreWeb.Controllers
             _env = env;
         }
 
-        // GET: /Products -> listado público (AsNoTracking para rendimiento)
+        // GET: /Products -> listado (solo usuarios autenticados)
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -25,7 +26,7 @@ namespace SafeStoreWeb.Controllers
             return View(items);
         }
 
-        // GET: /Products/Details/5 -> detalle público
+        // GET: /Products/Details/5 -> detalle (solo usuarios autenticados)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -35,37 +36,30 @@ namespace SafeStoreWeb.Controllers
         }
 
         // GET: /Products/Create -> formulario (solo usuarios autenticados)
-        // OWASP: control de acceso (A01). Restringimos creación a usuarios autenticados.
-        [Authorize]
         [HttpGet]
         public IActionResult Create() => View();
 
-        // POST: /Products/Create -> crear producto
-        [Authorize]
+        // POST: /Products/Create -> crear producto (solo usuarios autenticados)
         [HttpPost]
-        [ValidateAntiForgeryToken] // Protección CSRF
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([FromForm] Product model)
         {
-            // Server-side validation -> nunca confiar en client-side solamente
             if (!ModelState.IsValid) return View(model);
 
-            // Sanitización simple: recortar espacios
             model.Name = model.Name?.Trim() ?? string.Empty;
             model.Description = model.Description?.Trim() ?? string.Empty;
 
-            // Validación adicional (ejemplo): evitar scripts en descripción si no sanitizas HTML
             if (model.Description.Contains("<script", StringComparison.OrdinalIgnoreCase))
             {
                 ModelState.AddModelError("Description", "Descripción contiene contenido peligroso.");
                 return View(model);
             }
 
-            _db.Products.Add(model); // EF Core -> consultas parametrizadas (protección SQLi)
+            _db.Products.Add(model);
             await _db.SaveChangesAsync();
 
+            TempData["SuccessMessage"] = $"Producto '{model.Name}' creado exitosamente.";
             return RedirectToAction(nameof(Index));
         }
-
-        // Nota: para Edit/Delete se recomienda [Authorize(Roles = "Admin")] y validaciones adicionales.
     }
 }
