@@ -62,10 +62,28 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // ---------------------- Políticas de Autorización ----------------------
 // OWASP 6: Control de acceso basado en roles
+// Agregar después de AddIdentity y antes de AddControllers
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("UserOnly", policy => policy.RequireRole("User", "Admin"));
+    // Solo Administradores
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
+
+    // Administradores y Managers
+    options.AddPolicy("ManagementOnly", policy =>
+        policy.RequireRole("Admin", "Manager"));
+
+    // Usuarios autenticados (todos los roles)
+    options.AddPolicy("AuthenticatedUsers", policy =>
+        policy.RequireAuthenticatedUser());
+
+    // Política específica para crear productos
+    options.AddPolicy("CreateProducts", policy =>
+        policy.RequireRole("Admin", "Manager"));
+
+    // Política específica para editar/eliminar productos
+    options.AddPolicy("ModifyProducts", policy =>
+        policy.RequireRole("Admin"));
 });
 
 // ---------------------- MVC con Configuración de Seguridad ----------------------
@@ -221,55 +239,73 @@ app.UseAuthorization();
 
 // ---------------------- Seed de Base de Datos ----------------------
 // Solo ejecutar en desarrollo
-if (app.Environment.IsDevelopment())
+// En el seed de Program.cs, mejorar la creación de roles
+using (var scope = app.Services.CreateScope())
 {
-    using (var scope = app.Services.CreateScope())
+    var services = scope.ServiceProvider;
+    try
     {
-        var services = scope.ServiceProvider;
-        try
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+        // Crear roles específicos
+        var roles = new[] { "Admin", "Manager", "User" };
+        foreach (var role in roles)
         {
-            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-            // Crear roles
-            var roles = new[] { "Admin", "User" };
-            foreach (var role in roles)
+            if (!await roleManager.RoleExistsAsync(role))
             {
-                if (!await roleManager.RoleExistsAsync(role))
-                    await roleManager.CreateAsync(new IdentityRole(role));
-            }
-
-            // Crear usuario admin desde configuración
-            var adminEmail = builder.Configuration["AdminUser:Email"] ?? "admin@safestore.local";
-            var adminPassword = builder.Configuration["AdminUser:Password"] ?? "Admin12345!";
-
-            var admin = await userManager.FindByEmailAsync(adminEmail);
-            if (admin == null)
-            {
-                admin = new ApplicationUser
-                {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    EmailConfirmed = true
-                };
-
-                var createResult = await userManager.CreateAsync(admin, adminPassword);
-                if (createResult.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(admin, "Admin");
-                    Console.WriteLine($"Usuario admin creado: {adminEmail}");
-                }
-                else
-                {
-                    Console.WriteLine($"Error creando admin: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-                }
+                await roleManager.CreateAsync(new IdentityRole(role));
+                Console.WriteLine($"Rol creado: {role}");
             }
         }
-        catch (Exception ex)
+
+        // Crear usuario admin
+        var adminEmail = builder.Configuration["AdminUser:Email"] ?? "admin@safestore.local";
+        var adminPassword = builder.Configuration["AdminUser:Password"] ?? "Admin12345!";
+
+        var admin = await userManager.FindByEmailAsync(adminEmail);
+        if (admin == null)
         {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "Error durante la inicialización de la base de datos");
+            admin = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true
+            };
+
+            var createResult = await userManager.CreateAsync(admin, adminPassword);
+            if (createResult.Succeeded)
+            {
+                // Asignar múltiples roles al admin
+                await userManager.AddToRolesAsync(admin, new[] { "Admin", "Manager", "User" });
+                Console.WriteLine($"Usuario admin creado con roles: Admin, Manager, User");
+            }
         }
+
+        // Crear usuario manager de ejemplo
+        var managerEmail = "manager@safestore.local";
+        var manager = await userManager.FindByEmailAsync(managerEmail);
+        if (manager == null)
+        {
+            manager = new ApplicationUser
+            {
+                UserName = managerEmail,
+                Email = managerEmail,
+                EmailConfirmed = true
+            };
+
+            var createResult = await userManager.CreateAsync(manager, "Manager12345!");
+            if (createResult.Succeeded)
+            {
+                await userManager.AddToRolesAsync(manager, new[] { "Manager", "User" });
+                Console.WriteLine($"Usuario manager creado con roles: Manager, User");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Error durante la inicialización de la base de datos");
     }
 }
 

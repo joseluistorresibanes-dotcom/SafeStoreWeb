@@ -1,4 +1,6 @@
 @model IEnumerable<SafeStoreWeb.Models.Product>
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 @{
     ViewData["Title"] = "Catálogo de Productos";
     Layout = "_Layout";
@@ -17,9 +19,12 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="/Products/Create" class="btn btn-success btn-lg">
-                        <i class="bi bi-plus-circle me-2"></i>Crear Producto
-                    </a>
+                    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOnly")).Succeeded)
+                    {
+                        <a href="/Products/Create" class="btn btn-success btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Crear Producto
+                        </a>
+                    }
                     <button type="button" class="btn btn-outline-primary btn-lg" data-bs-toggle="modal" data-bs-target="#helpModal">
                         <i class="bi bi-question-circle me-2"></i>Ayuda
                     </button>
@@ -112,14 +117,62 @@
                                                class="btn btn-outline-primary" title="Ver detalles">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <!-- Espacio para futuras acciones -->
-                                            <button class="btn btn-outline-secondary" disabled title="Editar (próximamente)">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-outline-secondary" disabled title="Eliminar (próximamente)">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+
+                                            @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOnly")).Succeeded)
+                                            {
+                                                <!-- Acciones solo para administradores -->
+                                                <a asp-action="Edit" asp-route-id="@product.Id"
+                                                   class="btn btn-outline-warning" title="Editar producto">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-outline-danger"
+                                                        title="Eliminar producto"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#deleteModal@(product.Id)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <!-- Botones deshabilitados para usuarios regulares -->
+                                                <button class="btn btn-outline-secondary" disabled title="Editar (solo administradores)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" disabled title="Eliminar (solo administradores)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
                                         </div>
+
+                                        <!-- Modal de confirmación para eliminar (solo para admins) -->
+                                        @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOnly")).Succeeded)
+                                        {
+                                            <div class="modal fade" id="deleteModal@(product.Id)" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header bg-danger text-white">
+                                                            <h5 class="modal-title">
+                                                                <i class="bi bi-exclamation-triangle me-2"></i>Confirmar Eliminación
+                                                            </h5>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>¿Estás seguro de que deseas eliminar el producto <strong>@product.Name</strong>?</p>
+                                                            <p class="text-muted small">Esta acción no se puede deshacer.</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                            <form asp-action="Delete" asp-route-id="@product.Id" method="post">
+                                                                @Html.AntiForgeryToken()
+                                                                <button type="submit" class="btn btn-danger">
+                                                                    <i class="bi bi-trash me-2"></i>Eliminar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -136,9 +189,19 @@
                     </div>
                     <h4 class="text-muted mb-3">No hay productos disponibles</h4>
                     <p class="text-muted mb-4">Comienza agregando el primer producto al catálogo</p>
-                    <a href="/Products/Create" class="btn btn-success btn-lg">
-                        <i class="bi bi-plus-circle me-2"></i>Crear Primer Producto
-                    </a>
+                    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOnly")).Succeeded)
+                    {
+                        <a href="/Products/Create" class="btn btn-success btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Crear Primer Producto
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Solo los administradores pueden crear productos. Contacta al administrador del sistema.
+                        </div>
+                    }
                 </div>
             }
         </div>
@@ -151,7 +214,15 @@
                     <div class="col-md-6">
                         <small class="text-muted">
                             <i class="bi bi-shield-check me-1"></i>
-                            Área segura - Solo usuarios autenticados
+                            Área segura -
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <span class="text-success">Acceso de Administrador</span>
+                            }
+                            else
+                            {
+                                <span>Acceso de Usuario</span>
+                            }
                         </small>
                     </div>
                     <div class="col-md-6 text-md-end">
@@ -226,14 +297,17 @@
                         <p class="text-muted small">Haz clic en el botón <i class="bi bi-eye"></i> para ver información detallada de cada producto.</p>
 
                         <h6><i class="bi bi-plus-circle text-success me-2"></i>Crear Producto</h6>
-                        <p class="text-muted small">Usa el botón "Crear Producto" para agregar nuevos productos al catálogo.</p>
+                        <p class="text-muted small">Usa el botón "Crear Producto" para agregar nuevos productos al catálogo (solo administradores).</p>
                     </div>
                     <div class="col-md-6">
-                        <h6><i class="bi bi-shield-check text-warning me-2"></i>Seguridad</h6>
-                        <p class="text-muted small">Esta área está protegida y solo es accesible para usuarios autenticados.</p>
+                        <h6><i class="bi bi-shield-check text-warning me-2"></i>Control de Acceso</h6>
+                        <p class="text-muted small">
+                            <strong>Administradores:</strong> Pueden crear, editar y eliminar productos.<br>
+                            <strong>Usuarios:</strong> Solo pueden ver los productos.
+                        </p>
 
-                        <h6><i class="bi bi-pencil text-info me-2"></i>Próximamente</h6>
-                        <p class="text-muted small">Funciones de edición y eliminación estarán disponibles próximamente.</p>
+                        <h6><i class="bi bi-pencil text-info me-2"></i>Editar Productos</h6>
+                        <p class="text-muted small">Los botones de edición y eliminación están disponibles solo para usuarios administradores.</p>
                     </div>
                 </div>
             </div>

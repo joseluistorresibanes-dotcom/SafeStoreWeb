@@ -25,6 +25,16 @@
             .nav-link:hover {
                 color: #0d6efd !important;
             }
+
+        .role-badge {
+            font-size: 0.7em;
+            padding: 0.25em 0.5em;
+        }
+
+        .dropdown-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -40,14 +50,139 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Menú principal - Solo para usuarios autenticados -->
+                <ul class="navbar-nav me-auto">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Products" asp-action="Index">
+                                <i class="bi bi-grid-3x3-gap me-1"></i>Productos
+                            </a>
+                        </li>
+
+                        <!-- Menú para Management (Admin y Manager) -->
+                        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear me-1"></i>Gestión
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Products" asp-action="Create">
+                                            <i class="bi bi-plus-circle me-2"></i>Crear Producto
+                                        </a>
+                                    </li>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="bi bi-people me-2"></i>Gestión de Usuarios
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="bi bi-graph-up me-2"></i>Reportes
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- Menú exclusivo para Admin -->
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" href="#">
+                                    <i class="bi bi-shield-check me-1"></i>Admin
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+
+                <!-- Menú de usuario -->
                 <ul class="navbar-nav ms-auto">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
+                                <i class="bi bi-person-badge me-1"></i>
+                                @User.Identity.Name
+                                <!-- Badge de rol principal -->
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <span class="badge bg-success role-badge ms-1">Admin</span>
+                                }
+                                else if (User.IsInRole("Manager"))
+                                {
+                                    <span class="badge bg-primary role-badge ms-1">Manager</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary role-badge ms-1">User</span>
+                                }
                             </a>
-                            <ul class="dropdown-menu">
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <!-- Header con información del usuario -->
+                                <li class="dropdown-header">
+                                    <div class="d-flex flex-column">
+                                        <small class="text-muted">Conectado como:</small>
+                                        <strong>@User.Identity.Name</strong>
+                                    </div>
+                                </li>
+                                <li class="dropdown-header">
+                                    <small class="text-muted">Roles asignados:</small>
+                                    <div class="mt-1">
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <span class="badge bg-success me-1">Admin</span>
+                                        }
+                                        @if (User.IsInRole("Manager"))
+                                        {
+                                            <span class="badge bg-primary me-1">Manager</span>
+                                        }
+                                        @if (User.IsInRole("User"))
+                                        {
+                                            <span class="badge bg-secondary me-1">User</span>
+                                        }
+                                    </div>
+                                </li>
+                                <li class="dropdown-header">
+                                    <small class="text-muted">Permisos:</small>
+                                    <div class="mt-1">
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <span class="badge bg-success me-1 mb-1">Control Total</span>
+                                        }
+                                        else if (User.IsInRole("Manager"))
+                                        {
+                                            <span class="badge bg-primary me-1 mb-1">Crear Productos</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary me-1 mb-1">Solo Lectura</span>
+                                        }
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+
+                                <!-- Opciones comunes -->
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-person me-2"></i>Mi Perfil
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-lock me-2"></i>Cambiar Contraseña
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+
+                                <!-- Logout -->
                                 <li>
                                     <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item p-0">
                                         @Html.AntiForgeryToken()
@@ -61,14 +196,15 @@
                     }
                     else
                     {
+                        <!-- Menú para usuarios no autenticados -->
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Account" asp-action="Login">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar Sesión
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Account" asp-action="Register">
-                                <i class="bi bi-person-plus me-1"></i>Registro
+                                <i class="bi bi-person-plus me-1"></i>Registrarse
                             </a>
                         </li>
                     }
@@ -77,10 +213,66 @@
         </div>
     </nav>
 
+    <!-- Banner de información de seguridad -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="bg-light border-bottom py-2">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Sesión segura - Control de acceso basado en roles OWASP
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <!-- Contenido principal -->
     <main>
         @RenderBody()
     </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold">
+                        <i class="bi bi-shield-lock me-2"></i>SafeStore
+                    </h6>
+                    <p class="small mb-0">
+                        Aplicación web segura desarrollada con ASP.NET Core
+                    </p>
+                    <p class="small text-muted mt-2">
+                        Implementando medidas OWASP para seguridad web
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6 class="fw-bold">Seguridad Implementada</h6>
+                    <div class="small">
+                        <span class="badge bg-success me-1 mb-1">BCrypt</span>
+                        <span class="badge bg-primary me-1 mb-1">CSRF Tokens</span>
+                        <span class="badge bg-info me-1 mb-1">Roles</span>
+                        <span class="badge bg-warning me-1 mb-1">Validación</span>
+                        <span class="badge bg-danger me-1 mb-1">Headers Seguros</span>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="text-center small text-muted">
+                &copy; 2024 SafeStore - Sistema de Gestión Segura
+            </div>
+        </div>
+    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

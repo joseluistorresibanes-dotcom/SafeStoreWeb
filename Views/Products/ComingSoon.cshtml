@@ -1,0 +1,59 @@
+﻿@{
+    ViewData["Title"] = "Próximamente";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-warning text-dark py-4">
+                    <h2 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>Función en Desarrollo
+                    </h2>
+                </div>
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-clock display-1 text-warning mb-3"></i>
+                        <h3 class="text-dark">Próximamente Disponible</h3>
+                    </div>
+
+                    <p class="text-muted mb-4">
+                        Esta función está actualmente en desarrollo y estará disponible pronto.
+                    </p>
+
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle me-2"></i>Información de Acceso</h6>
+                        <p class="mb-0 small">
+                            <strong>Rol actual:</strong>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <span class="badge bg-success">Administrador</span>
+                            }
+                            else if (User.IsInRole("Manager"))
+                            {
+                                <span class="badge bg-primary">Manager</span>
+                            }
+                            else if (User.IsInRole("User"))
+                            {
+                                <span class="badge bg-secondary">Usuario</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-dark">Sin rol</span>
+                            }
+                        </p>
+                        <p class="mb-0 small mt-1">
+                            <strong>Permisos requeridos:</strong>
+                            <span class="badge bg-danger">Administrador</span>
+                        </p>
+                    </div>
+
+                    <a asp-action="Index" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Catálogo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
