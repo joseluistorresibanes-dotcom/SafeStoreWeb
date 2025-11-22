@@ -112,6 +112,7 @@ namespace SafeStoreWeb.Controllers
 
             return View(model);
         }
+
         // -------------------- LOGIN --------------------
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
@@ -131,7 +132,6 @@ namespace SafeStoreWeb.Controllers
         [EnableRateLimiting("Login")]
         public async Task<IActionResult> Login(LoginModel model)
         {
-
             if (model == null)
             {
                 ModelState.AddModelError("", "El modelo llegó vacío al servidor");
@@ -200,16 +200,37 @@ namespace SafeStoreWeb.Controllers
 
             return View(model);
         }
-        // -------------------- LOGOUT --------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+
+        // -------------------- LOGOUT (SOLO GET) --------------------
+        [HttpGet]
         public async Task<IActionResult> Logout()
         {
-            var userName = User.Identity.Name;
-            await _signInManager.SignOutAsync();
-            _logger.LogInformation("Logout exitoso para: {UserName}", userName);
+            try
+            {
+                var userName = User?.Identity?.Name ?? "Usuario desconocido";
 
-            return RedirectToAction("Login");
+                if (User.Identity.IsAuthenticated)
+                {
+                    await _signInManager.SignOutAsync();
+                    _logger.LogInformation("Logout exitoso para: {UserName}", userName);
+
+                    // Limpiar la sesión completamente
+                    HttpContext.Session.Clear();
+
+                    TempData["SuccessMessage"] = "Has cerrado sesión exitosamente.";
+                }
+                else
+                {
+                    _logger.LogWarning("Intento de logout para usuario no autenticado");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error durante el logout");
+                // Continuar con la redirección incluso si hay error
+            }
+
+            return RedirectToAction("Login", "Account");
         }
 
         // -------------------- ACCESS DENIED --------------------
@@ -220,7 +241,6 @@ namespace SafeStoreWeb.Controllers
         }
     }
 
-    // ViewModels con validaciones mejoradas
     // ViewModels con validaciones mejoradas y mensajes específicos
     public class RegisterModel
     {
@@ -241,6 +261,7 @@ namespace SafeStoreWeb.Controllers
         [Display(Name = "Confirmar contraseña")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
     public class LoginModel
     {
         [Required(ErrorMessage = "El email es obligatorio")]

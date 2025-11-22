@@ -261,7 +261,7 @@ using (var scope = app.Services.CreateScope())
 
         // Crear usuario admin
         var adminEmail = builder.Configuration["AdminUser:Email"] ?? "admin@safestore.local";
-        var adminPassword = builder.Configuration["AdminUser:Password"] ?? "Admin12345!";
+        var adminPassword = builder.Configuration["AdminUser:Password"] ?? "Admin123456789!";
 
         var admin = await userManager.FindByEmailAsync(adminEmail);
         if (admin == null)
